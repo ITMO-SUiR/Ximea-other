@@ -326,7 +326,7 @@ class MyTableWidget(QWidget):
 
     def image_size_1(self):
         cnt = 1
-        
+
         #print("imag_size is:", imag_size)
         while cnt:
             imag_size = [self.expose_spinbox_1.value(), 
@@ -335,12 +335,11 @@ class MyTableWidget(QWidget):
                         self.xpixs_spinbox_1.value(), 
                         self.yoffset_spinbox_1.value() ]
 
-            cam_data = self.ximea_cam_1.get_data(imag_size)
-            yield cam_data
+            yield self.ximea_cam_1.get_data(imag_size)
 
     def image_size_2(self):
         cnt = 1
-        
+
         #print("imag_size is:", imag_size)
         while cnt:
             imag_size = [self.expose_spinbox_2.value(), 
@@ -349,8 +348,7 @@ class MyTableWidget(QWidget):
                         self.xpixs_spinbox_2.value(), 
                         self.yoffset_spinbox_2.value() ]
 
-            cam_data = self.ximea_cam_2.get_data(imag_size)
-            yield cam_data
+            yield self.ximea_cam_2.get_data(imag_size)
 
     def plot_1(self):
 

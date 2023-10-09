@@ -34,10 +34,10 @@ for i in range(10):
     data = list(data_raw)
 
     #print image data and metadata
-    print('Image number: ' + str(i))
-    print('Image width (pixels):  ' + str(img.width))
-    print('Image height (pixels): ' + str(img.height))
-    print('First 10 pixels: ' + str(data[:10]))
+    print(f'Image number: {str(i)}')
+    print(f'Image width (pixels):  {str(img.width)}')
+    print(f'Image height (pixels): {str(img.height)}')
+    print(f'First 10 pixels: {str(data[:10])}')
     print('\n')    
 
 #stop data acquisition

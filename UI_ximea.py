@@ -269,7 +269,7 @@ class MyTableWidget(QWidget):
 
     def image_size(self):
         cnt = 1
-        
+
         #print("imag_size is:", imag_size)
         while cnt:
             imag_size = [self.expose_spinbox.value(), 
@@ -278,8 +278,7 @@ class MyTableWidget(QWidget):
                         self.xpixs_spinbox.value(), 
                         self.yoffset_spinbox.value() ]
 
-            cam_data = self.ximea_cam.get_data(imag_size)
-            yield cam_data
+            yield self.ximea_cam.get_data(imag_size)
 
     def plot_L(self):
 

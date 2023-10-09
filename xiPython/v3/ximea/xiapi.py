@@ -19,9 +19,6 @@ if sys.maxsize > 2**32:
     #get_image_data_numpy() returns data
     c_arr_ops = CDLL(join(LIB_PATH, 'xiArrOps64.so'))
 
-    #library for communication with device
-    _device = CDLL(join(LIB_PATH,'m3api.framework', 'm3api'))
-    
 else:
     LIB_PATH = join(dirname(__file__), 'libs', 'x32')
 
@@ -29,8 +26,9 @@ else:
     #get_image_data_numpy() returns data
     c_arr_ops = CDLL(join(LIB_PATH, 'xiArrOps32.so'))
 
-    #library for communication with device
-    _device = CDLL(join(LIB_PATH,'m3api.framework', 'm3api'))
+
+#library for communication with device
+_device = CDLL(join(LIB_PATH,'m3api.framework', 'm3api'))
 
 class Xi_error(Exception):
     '''
@@ -94,9 +92,7 @@ class Image(XI_IMG):
                     c_void_p(self.bp),
                     data
                     )
-                numpy_data = np.array(data, copy=False, dtype=np.uint8)
-                return numpy_data  
-            
+                return np.array(data, copy=False, dtype=np.uint8)
             elif self.get_bytes_per_pixel() == 2:
                 c_array = c_ushort*self.width*self.height
                 data = c_array()
@@ -106,13 +102,9 @@ class Image(XI_IMG):
                     c_void_p(self.bp),
                     data
                     )
-                numpy_data = np.array(data, copy=False, dtype=np.uint16)
-                return numpy_data            
-            
+                return np.array(data, copy=False, dtype=np.uint16)
             elif self.get_bytes_per_pixel() == 3:
-                if invert_rgb_order: invRGB = 1
-                else: invRGB = 0
-                
+                invRGB = 1 if invert_rgb_order else 0
                 c_array = c_ubyte*3*self.width*self.height
                 data = c_array()
                 c_arr_ops.arrRGB(
@@ -122,13 +114,9 @@ class Image(XI_IMG):
                     data,
                     c_int(invRGB)
                     )
-                numpy_data = np.array(data, copy=False, dtype=np.uint8)
-                return numpy_data
-
+                return np.array(data, copy=False, dtype=np.uint8)
             elif self.get_bytes_per_pixel() == 4:
-                if invert_rgb_order: invRGB = 1
-                else: invRGB = 0
-                
+                invRGB = 1 if invert_rgb_order else 0
                 c_array = c_ubyte*4*self.width*self.height
                 data = c_array()
                 c_arr_ops.arrRGBA(
@@ -138,12 +126,10 @@ class Image(XI_IMG):
                     data,
                     c_int(invRGB)
                     )
-                numpy_data = np.array(data, copy=False, dtype=np.uint8)
-                return numpy_data
-            
+                return np.array(data, copy=False, dtype=np.uint8)
             else:
                 raise Xi_error(108)     #"Data format not supported"
-        
+
         except NameError:
             raise ImportError('Numpy module is not installed.')
 
@@ -199,15 +185,14 @@ class Camera(object):
         '''
         Connect the camera specified by dev_id from __init__.
         '''
-        if not self.CAM_OPEN:
-            self.handle = HANDLE()
-            stat = self.device.xiOpenDevice(self.dev_id, byref(self.handle))
-            if not stat == 0:
-                raise Xi_error(stat)
-            
-            self.CAM_OPEN = True
-        else:
+        if self.CAM_OPEN:
             raise RuntimeError('Camera already open. Create new instance to open next camera')
+        self.handle = HANDLE()
+        stat = self.device.xiOpenDevice(self.dev_id, byref(self.handle))
+        if stat != 0:
+            raise Xi_error(stat)
+
+        self.CAM_OPEN = True
 
         
     def open_device_by(self, open_type, val):
@@ -215,33 +200,32 @@ class Camera(object):
         Connect the camera specified by open_type (string), see keys in
         dictionary xidefs.XI_OPEN_BY
         '''
-        if not self.CAM_OPEN:
-            self.get_number_devices()
-            
-            self.handle = HANDLE()
-
-            if not open_type in XI_OPEN_BY:
-                raise RuntimeError('invalid value')
-                
-            buf = create_string_buffer(bytes(val, 'UTF-8')) #only python3.x
-            
-            stat = self.device.xiOpenDeviceBy(
-                XI_OPEN_BY[open_type],
-                buf,
-                byref(self.handle)
-                )
-            if not stat == 0:
-                raise Xi_error(stat)
-            self.CAM_OPEN = True
-        else:
+        if self.CAM_OPEN:
             raise RuntimeError('Camera already open. Create new instance to open next camera')
+        self.get_number_devices()
+
+        self.handle = HANDLE()
+
+        if open_type not in XI_OPEN_BY:
+            raise RuntimeError('invalid value')
+
+        buf = create_string_buffer(bytes(val, 'UTF-8')) #only python3.x
+
+        stat = self.device.xiOpenDeviceBy(
+            XI_OPEN_BY[open_type],
+            buf,
+            byref(self.handle)
+            )
+        if stat != 0:
+            raise Xi_error(stat)
+        self.CAM_OPEN = True
 
 
     def open_device_by_SN(self, serial_number):
         '''
         Connect the camera specified by its serial number (string).
         '''
-        if not type(serial_number) == str:
+        if type(serial_number) != str:
             raise TypeError('serial_number must be a string')
         self.open_device_by('XI_OPEN_BY_SN', serial_number)
 
@@ -250,7 +234,7 @@ class Camera(object):
         '''
         Connect the camera specified by its path (string).
         '''
-        if not type(path) == str:
+        if type(path) != str:
             raise TypeError('serial_number must be a string')
         self.open_device_by('XI_OPEN_BY_INST_PATH', path)
         
@@ -260,7 +244,7 @@ class Camera(object):
         Close connection to the camera.
         '''
         stat = self.device.xiCloseDevice(self.handle)
-        if not stat == 0:
+        if stat != 0:
             raise Xi_error(stat)
         self.CAM_OPEN = False
 
@@ -273,7 +257,7 @@ class Camera(object):
         '''
         count = DWORD()
         stat = self.device.xiGetNumberDevices(byref(count))
-        if not stat == 0:
+        if stat != 0:
             raise Xi_error(stat)
         return count.value
         
@@ -284,7 +268,7 @@ class Camera(object):
         function get_image().
         '''
         stat = self.device.xiStartAcquisition(self.handle)
-        if not stat == 0:
+        if stat != 0:
             raise Xi_error(stat)
         
 
@@ -293,7 +277,7 @@ class Camera(object):
         Stop data acquisition.
         '''
         stat = self.device.xiStopAcquisition(self.handle)
-        if not stat == 0:
+        if stat != 0:
             raise Xi_error(stat)
         
 
@@ -311,8 +295,8 @@ class Camera(object):
             DWORD(timeout),
             byref(image)
             )
-        
-        if not stat == 0:
+
+        if stat != 0:
             raise Xi_error(stat)
 
 
@@ -330,7 +314,7 @@ class Camera(object):
         '''
         
         prm = create_string_buffer(bytes(param, 'UTF-8')) #only python3.x
-        
+
         val_len = 100
         val = create_string_buffer(val_len) 
 
@@ -340,8 +324,8 @@ class Camera(object):
             val,
             DWORD(val_len)
             )
-        
-        if not stat == 0:
+
+        if stat != 0:
             raise Xi_error(stat)
         return val.value        
 
@@ -356,31 +340,24 @@ class Camera(object):
         set_exposure(10000).
         '''        
         prm = create_string_buffer(bytes(param, 'UTF-8')) #only python3.x
-        
-        if not param in VAL_TYPE:
+
+        if param not in VAL_TYPE:
             raise RuntimeError('invalid parameter')
 
         val_type = VAL_TYPE[param]
-        
-        if val_type == 'xiTypeString':
-            val_len = DWORD(len(val))
-            val = create_string_buffer(bytes(val, 'UTF-8')) #only python3.x
-        elif val_type == 'xiTypeInteger':
+
+        if val_type == 'xiTypeEnum':
             val_len = DWORD(4)
-            val = pointer(c_int(val))
+            val = pointer(ASSOC_ENUM[param][val])
         elif val_type == 'xiTypeFloat':
             val_len = DWORD(4)
             val = pointer(FLOAT(val))
-        elif val_type == 'xiTypeEnum':
+        elif val_type in ['xiTypeInteger', 'xiTypeBoolean', 'xiTypeCommand']:
             val_len = DWORD(4)
-            val = pointer(ASSOC_ENUM[param][val])
-        elif val_type == 'xiTypeBoolean':
-            val_len = DWORD(4)
-            val = pointer(c_int(val))       
-        elif val_type == 'xiTypeCommand':
-            val_len = DWORD(4)
-            val = pointer(c_int(val))       
-            
+            val = pointer(c_int(val))
+        elif val_type == 'xiTypeString':
+            val_len = DWORD(len(val))
+            val = create_string_buffer(bytes(val, 'UTF-8')) #only python3.x
         stat = self.device.xiSetParam(
             self.handle,
             prm,
@@ -389,7 +366,7 @@ class Camera(object):
             XI_PRM_TYPE[val_type]
             )
 
-        if not stat == 0:
+        if stat != 0:
             raise Xi_error(stat)
 
     
@@ -405,24 +382,26 @@ class Camera(object):
         ''' 
         prm = create_string_buffer(bytes(param, 'UTF-8')) #only python3.x
 
-        if not param.split(':')[0] in VAL_TYPE:
+        if param.split(':')[0] not in VAL_TYPE:
             raise RuntimeError('invalid parameter')
 
         val_type = VAL_TYPE[param.split(':')[0]]
 
         if val_type == 'xiTypeString':
             val_len = DWORD(buffer_size)
-            val = create_string_buffer(val_len.value) 
-        elif val_type == 'xiTypeInteger' or \
-             val_type == 'xiTypeEnum' or \
-             val_type == 'xiTypeBoolean'or \
-             val_type == 'xiTypeCommand' :
+            val = create_string_buffer(val_len.value)
+        elif val_type in [
+            'xiTypeInteger',
+            'xiTypeEnum',
+            'xiTypeBoolean',
+            'xiTypeCommand',
+        ]:
             val_len = DWORD(4)
             val = pointer(c_int())
         elif val_type == 'xiTypeFloat':
             val_len = DWORD(4)
             val = pointer(FLOAT())
-        
+
         stat = self.device.xiGetParam(
             self.handle,
             prm,
@@ -431,13 +410,13 @@ class Camera(object):
             byref(XI_PRM_TYPE[val_type])
             )
 
-        if not stat == 0:
+        if stat != 0:
             raise Xi_error(stat)
-        
+
         if val_type == 'xiTypeString':
             return val.value[:val_len.value]                 
 
-        if val_type == 'xiTypeInteger' or val_type == 'xiTypeFloat':
+        if val_type in ['xiTypeInteger', 'xiTypeFloat']:
             return val.contents.value
 
         if val_type == 'xiTypeEnum':
