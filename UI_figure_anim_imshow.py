@@ -111,9 +111,7 @@ if __name__=="__main__":
 
     def data_gen(cnt = 0):
         global x,y
-        cnt = 0
-        while cnt < 1000:
-            cnt += 1
+        for _ in range(1000):
             x += np.pi / 15.
             y += np.pi / 20.
             yield f(x,y)

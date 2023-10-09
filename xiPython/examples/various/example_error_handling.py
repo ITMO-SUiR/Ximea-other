@@ -34,10 +34,10 @@ try:
     data = list(data_raw)
 
     #print image data and metadata
-    print('Image width (pixels):  ' + str(img.width))
-    print('Image height (pixels): ' + str(img.height))
-    print('First 10 pixels: ' + str(data[:10]))
-    
+    print(f'Image width (pixels):  {str(img.width)}')
+    print(f'Image height (pixels): {str(img.height)}')
+    print(f'First 10 pixels: {str(data[:10])}')
+
 except xiapi.Xi_error as err:
     if err.status == 10:
         print('Timeout error occured.')

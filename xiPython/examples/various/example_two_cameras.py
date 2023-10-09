@@ -10,8 +10,8 @@ cam1.open_device()
 cam2.open_device()
 
 #print device serial numbers
-print('Camera 1 serial number: ' + str(cam1.get_device_sn()))
-print('Camera 2 serial number: ' + str(cam2.get_device_sn()))
+print(f'Camera 1 serial number: {str(cam1.get_device_sn())}')
+print(f'Camera 2 serial number: {str(cam2.get_device_sn())}')
 
 #stop communication
 cam1.close_device()

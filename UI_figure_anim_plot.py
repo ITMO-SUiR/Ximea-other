@@ -66,16 +66,14 @@ class UI_figure:
 
 
     def UI_Animation_plot(self):
-        self.line, = self.ax.plot([], [], animated=True)  
+        self.line, = self.ax.plot([], [], animated=True)
         #import to use "self.ax.plot" not "plt.plot" that will mix two figures
         self.xdata = np.array([])
         self.ydata = np.array([])
-        self.line.set_data(self.xdata, self.ydata) 
+        self.line.set_data(self.xdata, self.ydata)
         self.ax.set_ylim(-2, 2)
         self.ax.set_xlim(0, 50)
-        if self.plot_axis == [0,0,0,0]:
-            pass
-        else:
+        if self.plot_axis != [0, 0, 0, 0]:
             self.xmin, self.xmax, self.ymin, self.ymax = self.plot_axis
             self.ax.set_xlim(self.xmin, self.xmax)
             self.ax.set_ylim(self.ymin, self.ymax)
@@ -145,10 +143,8 @@ if __name__=="__main__":
     figure = plt.figure()
 
     def single_data_gen(t=0):
-        cnt = 0
         t = 0
-        while cnt < 1000:
-            cnt += 1
+        for _ in range(1000):
             t += 0.1
             yield t, np.sin(t)
 
